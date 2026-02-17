@@ -26,28 +26,13 @@ body{
 .wrap{
   max-width:1200px;
   margin:auto;
-  padding:40px 20px;
+  padding:40px 20px 80px 20px;
 }
 
 .grid{
   display:flex;
   flex-wrap:wrap;
   gap:32px;
-}
-
-@media(min-width:900px){
-  .grid{gap:32px;}
-}
-
-.card{
-  position:relative;
-  background:rgba(255,255,255,.05);
-  border-radius:var(--radius);
-  padding:24px;
-  backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,.15);
-  box-shadow:var(--shadow);
-  width:100%;
 }
 
 .card-item{
@@ -79,6 +64,36 @@ body{
 .name{font-weight:800;font-size:16px;}
 .meta{font-size:12px;opacity:.7;}
 
+/* Bottom control bar */
+.bottom-controls{
+  position:fixed;
+  bottom:16px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:16px;
+}
+
+.bottom-controls button{
+  padding:12px 16px;
+  font-size:18px;
+  font-weight:bold;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  background:white;
+  color:black;
+}
+
+.bottom-controls .edit-selected{
+  background:transparent;
+  color:white;
+  font-size:22px;
+  position:relative;
+  top:3px; /* align the * with + */
+}
+
+/* Modal / editor styling */
 .modal,.editor{
   position:fixed;
   inset:0;
@@ -105,8 +120,8 @@ body{
   display:flex;
   flex-direction:column;
   gap:14px;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-height:90vh;
+  overflow-y:auto;
 }
 
 input,select{
@@ -122,13 +137,6 @@ button{
   border:none;
   cursor:pointer;
   border-radius:6px;
-}
-
-#addCardBtn{
-  margin-top:32px;
-  background:white;
-  color:black;
-  font-weight:600;
 }
 </style>
 </head>
@@ -154,10 +162,12 @@ button{
 </div>
 
 </div>
+</div>
 
-<button id="addCardBtn">+ Add Card</button>
-<button id="editSelectedBtn">Edit Selected</button>
-
+<!-- Bottom Controls -->
+<div class="bottom-controls">
+  <button id="addBtn">+</button>
+  <button class="edit-selected" id="editSelectedBtn">*</button>
 </div>
 
 <!-- View Modal -->
@@ -210,13 +220,13 @@ button{
 </div>
 
 <script>
-let dragged=null;
-const dashboard=document.getElementById("dashboard");
-const viewModal=document.getElementById("viewModal");
-const modalText=document.getElementById("modalText");
-const editor=document.getElementById("editor");
+let dashboard=document.getElementById("dashboard");
+let viewModal=document.getElementById("viewModal");
+let modalText=document.getElementById("modalText");
+let editor=document.getElementById("editor");
 let currentElement=null;
 let selectedCards=new Set();
+let dragged=null;
 
 /* -------------------------
    DRAG SYSTEM
@@ -235,13 +245,10 @@ function enableDrag(el){
 
     if(selectedCards.size>1 && selectedCards.has(dragged)){
       // Move all selected cards together
-      const positions=Array.from(selectedCards).map(c=>Array.from(dashboard.children).indexOf(c));
-      positions.sort((a,b)=>a-b);
-      const minIndex=positions[0];
-      positions.forEach(c=>{
-        dashboard.removeChild(c);
-      });
-      dashboard.insertBefore(...selectedCards, dashboard.children[minIndex] || null);
+      const nodes=Array.from(selectedCards);
+      const minIndex=Math.min(...nodes.map(c=>Array.from(dashboard.children).indexOf(c)));
+      nodes.forEach(c=>dashboard.removeChild(c));
+      nodes.forEach((c,i)=>dashboard.insertBefore(c,dashboard.children[minIndex+i] || null));
     } else if(dragged!==target){
       dashboard.insertBefore(dragged,target.nextSibling);
     }
@@ -249,7 +256,7 @@ function enableDrag(el){
 }
 
 /* -------------------------
-   CARD SELECTION
+   SELECTION
 ------------------------- */
 function toggleSelection(el){
   if(selectedCards.has(el)){
@@ -262,9 +269,11 @@ function toggleSelection(el){
 }
 
 /* -------------------------
-   EDIT BUTTON
+   ADD EDIT / POPUP BEHAVIOR
 ------------------------- */
-function addEditButton(el){
+function addCardBehavior(el){
+  enableDrag(el);
+
   el.addEventListener("mousedown",e=>{
     if(e.button!==0) return;
     e.preventDefault();
@@ -285,37 +294,49 @@ function addEditButton(el){
 }
 
 /* -------------------------
-   INITIAL CARDS SETUP
+   INITIAL CARDS
 ------------------------- */
-document.querySelectorAll(".card-item").forEach(el=>{
-  enableDrag(el);
-  addEditButton(el);
+document.querySelectorAll(".card-item").forEach(addCardBehavior);
+
+/* -------------------------
+   CLOSE VIEW MODAL
+------------------------- */
+function closeView(){viewModal.classList.remove("active");}
+
+/* -------------------------
+   ADD PANEL OR CARD
+------------------------- */
+document.getElementById("addBtn").addEventListener("click",()=>{
+  const typeChoice=prompt("Add a 'panel' or 'card'?").toLowerCase();
+  if(typeChoice!=="panel" && typeChoice!=="card") return alert("Invalid choice");
+
+  // Pre-fill editor before creation
+  currentElement=document.createElement("div");
+  if(typeChoice==="card"){
+    currentElement.className="card-item";
+    const cardTypeChoice=prompt("Card type: 'full' or 'half'?").toLowerCase();
+    if(cardTypeChoice==="half") currentElement.classList.add("half");
+    else currentElement.classList.add("full");
+    currentElement.dataset.detail="New card popup";
+    currentElement.innerHTML=`<p class="name">New Card</p><p class="meta">New Info</p>`;
+  } else if(typeChoice==="panel"){
+    currentElement.className="card-item full";
+    currentElement.dataset.detail="New panel popup";
+    currentElement.innerHTML=`<p class="name">New Panel</p><p class="meta">Panel Info</p>`;
+  }
+
+  addCardBehavior(currentElement);
+  editor.classList.add("active");
 });
 
 /* -------------------------
-   ADD NEW CARD
-------------------------- */
-document.getElementById("addCardBtn").addEventListener("click",()=>{
-  const type=prompt("Enter card type: 'full' or 'half'").toLowerCase();
-  const newCard=document.createElement("div");
-  newCard.className="card-item";
-  if(type==="half") newCard.classList.add("half");
-  else newCard.classList.add("full");
-  newCard.innerHTML=`<p class="name">New Card</p><p class="meta">New Info</p>`;
-  enableDrag(newCard);
-  addEditButton(newCard);
-  dashboard.appendChild(newCard);
-});
-
-/* -------------------------
-   EDIT SELECTED
+   EDIT SELECTED BUTTON
 ------------------------- */
 document.getElementById("editSelectedBtn").addEventListener("click",()=>{
   if(selectedCards.size===0) return;
   currentElement=null;
   editor.classList.add("active");
-
-  // Pre-fill with first selected card values
+  // Pre-fill editor with first selected
   const first=selectedCards.values().next().value;
   const nameEl=first.querySelector(".name");
   if(nameEl){
@@ -323,17 +344,15 @@ document.getElementById("editSelectedBtn").addEventListener("click",()=>{
     editTextSize.value=parseInt(getComputedStyle(nameEl).fontSize);
     editTextColor.value=rgbToHex(getComputedStyle(nameEl).color);
   }
-  if(first.classList.contains("half")) cardType.value="half";
-  else cardType.value="full";
+  cardType.value=first.classList.contains("half")?"half":"full";
 });
 
 /* -------------------------
    REMOVE IMAGE
 ------------------------- */
 document.getElementById("removeImage").addEventListener("click",()=>{
-  selectedCards.forEach(c=>{
-    c.style.backgroundImage="";
-  });
+  selectedCards.forEach(c=>c.style.backgroundImage="");
+  if(currentElement) currentElement.style.backgroundImage="";
   editBgFile.value="";
 });
 
@@ -341,7 +360,10 @@ document.getElementById("removeImage").addEventListener("click",()=>{
    SAVE EDITS
 ------------------------- */
 document.getElementById("saveEdit").addEventListener("click",()=>{
-  selectedCards.forEach(current=>{
+  const targets=selectedCards.size>0 ? Array.from(selectedCards) : [currentElement];
+  if(!targets[0]) return;
+
+  targets.forEach(current=>{
     const nameEl=current.querySelector(".name");
     if(nameEl){
       nameEl.textContent=editText.value;
@@ -379,6 +401,11 @@ document.getElementById("saveEdit").addEventListener("click",()=>{
   });
   selectedCards.clear();
   editor.classList.remove("active");
+
+  // Append new card if created
+  if(!dashboard.contains(currentElement) && currentElement){
+    dashboard.appendChild(currentElement);
+  }
 });
 
 /* -------------------------
@@ -398,7 +425,6 @@ function rgbToHex(rgb){
     return hex.length==1?"0"+hex:hex;
   }).join('');
 }
-
 </script>
 </body>
 </html>
