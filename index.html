@@ -173,6 +173,7 @@ button{
 
 <label>Upload Background Image</label>
 <input type="file" id="editBgFile" accept="image/*">
+<button type="button" id="removeImage">Remove Background Image</button>
 
 <label>Blur</label>
 <input type="range" id="editBlur" min="0" max="20">
@@ -190,7 +191,15 @@ const editorModal = document.getElementById('editorModal');
 
 let currentCard = null;
 
-/* View popup */
+/* Remove image */
+document.getElementById('removeImage').addEventListener('click', () => {
+  if(currentCard){
+    currentCard.style.backgroundImage = "";
+    document.getElementById('editBgFile').value = "";
+  }
+});
+
+/* View popup + Edit button */
 document.querySelectorAll('.card-item').forEach(card => {
 
   card.addEventListener('click', () => {
@@ -198,7 +207,6 @@ document.querySelectorAll('.card-item').forEach(card => {
     modal.classList.add('active');
   });
 
-  /* Create edit button */
   const editBtn = document.createElement('div');
   editBtn.classList.add('edit-btn');
   card.appendChild(editBtn);
@@ -209,52 +217,60 @@ document.querySelectorAll('.card-item').forEach(card => {
 
     const nameEl = card.querySelector('.name');
 
-    editText.value = nameEl.textContent;
-    editTextSize.value = parseInt(getComputedStyle(nameEl).fontSize);
-    editTextColor.value = rgbToHex(getComputedStyle(nameEl).color);
+    document.getElementById('editText').value = nameEl.textContent;
+    document.getElementById('editTextSize').value =
+      parseInt(getComputedStyle(nameEl).fontSize);
+    document.getElementById('editTextColor').value =
+      rgbToHex(getComputedStyle(nameEl).color);
 
     editorModal.classList.add('active');
   });
 
 });
 
+/* Close view modal */
 closeModal.onclick = () => modal.classList.remove('active');
 modal.onclick = (e)=>{ if(e.target===modal) modal.classList.remove('active'); };
 
-saveEdit.onclick = ()=>{
+/* Save edits */
+document.getElementById('saveEdit').onclick = ()=>{
 
   const nameEl = currentCard.querySelector('.name');
 
-  nameEl.textContent = editText.value;
-  nameEl.style.color = editTextColor.value;
-  nameEl.style.fontSize = editTextSize.value + "px";
+  nameEl.textContent = document.getElementById('editText').value;
+  nameEl.style.color = document.getElementById('editTextColor').value;
+  nameEl.style.fontSize =
+    document.getElementById('editTextSize').value + "px";
 
-  if(gradientSelect.value==="linear"){
+  const boxColor = document.getElementById('editBoxColor').value;
+  const gradient = document.getElementById('gradientSelect').value;
+
+  if(gradient === "linear"){
     currentCard.style.background =
-      `linear-gradient(135deg, ${editBoxColor.value}, black)`;
-  }else{
-    currentCard.style.background = editBoxColor.value;
+      `linear-gradient(135deg, ${boxColor}, black)`;
+  } else {
+    currentCard.style.background = boxColor;
   }
 
-const fileInput = document.getElementById('editBgFile');
+  const fileInput = document.getElementById('editBgFile');
 
-if(fileInput.files && fileInput.files[0]){
-  const reader = new FileReader();
+  if(fileInput.files && fileInput.files[0]){
+    const reader = new FileReader();
 
-  reader.onload = function(e){
-    currentCard.style.backgroundImage = `url(${e.target.result})`;
-    currentCard.style.backgroundSize = "cover";
-    currentCard.style.backgroundPosition = "center";
-  };
+    reader.onload = function(e){
+      currentCard.style.backgroundImage = `url(${e.target.result})`;
+      currentCard.style.backgroundSize = "cover";
+      currentCard.style.backgroundPosition = "center";
+    };
 
-  reader.readAsDataURL(fileInput.files[0]);
-}
-
-  currentCard.style.backdropFilter = `blur(${editBlur.value}px)`;
+    reader.readAsDataURL(fileInput.files[0]);
+    fileInput.value = "";
+  }
 
   editorModal.classList.remove('active');
 };
 
+/* Helper */
 function rgbToHex(rgb){
   const result = rgb.match(/\d+/g);
   return "#" + result.map(x=>{
