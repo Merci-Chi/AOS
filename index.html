@@ -69,8 +69,16 @@ body {
 
 /* card type variants */
 .card-item.full { width: 100%; }
-.card-item.half { width: 48%; }
-.card-item.half-wrapper { display:flex; gap:4%; flex-wrap:wrap; }
+.half-wrapper {
+  display: flex;
+  gap: 16px;       /* space between half cards */
+  flex-wrap: wrap;  /* allow wrapping on small screens */
+}
+
+.card-item.half {
+  flex: 1 1 calc(50% - 8px); /* take up ~50% minus half the gap */
+  max-width: calc(50% - 8px); /* prevent overflow */
+}
 
 /* Modal */
 .modal {
