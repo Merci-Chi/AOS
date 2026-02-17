@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>iPhone Widget Style Grid</title>
+<title>Interactive Glass Cards</title>
 <style>
 :root {
   --bg: #000;
@@ -20,46 +20,59 @@
   --maxw: 1200px;
 }
 
-* { box-sizing: border-box; margin:0; padding:0; }
-body { font-family: var(--fontA); background: var(--bg); color: var(--text); min-height:100vh; padding:20px; }
+* { box-sizing: border-box; }
+html, body { margin:0; height:100%; font-family: var(--fontA); background: var(--bg); color: var(--text); }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  grid-auto-rows: 140px;
-  gap: 12px;
-  max-width: var(--maxw);
-  margin: 0 auto;
+body {
+  background: radial-gradient(1200px 800px at 10% 10%, rgba(255,255,255,.08), transparent 55%),
+              radial-gradient(900px 700px at 90% 20%, rgba(255,255,255,.06), transparent 60%),
+              radial-gradient(900px 700px at 30% 90%, rgba(255,255,255,.05), transparent 60%),
+              var(--bg);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Widget Styles */
-.widget {
-  background: var(--glass);
-  border: 1px solid var(--line);
+.wrap { max-width: var(--maxw); margin:0 auto; padding:20px 16px 100px; }
+
+.card { 
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  border: 1px solid var(--line); 
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
-  padding: 12px;
-  cursor: pointer;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
+  padding:20px;
   transition: transform .15s ease, box-shadow .15s ease;
 }
-.widget:hover { transform: translateY(-3px); box-shadow:0 15px 35px rgba(0,0,0,.65); }
+.card:hover { transform: translateY(-3px); box-shadow:0 15px 35px rgba(0,0,0,.65); }
 
-.widget .title { font-size:14px; font-weight:700; margin-bottom:6px; }
-.widget .meta { font-size:11px; color: var(--muted); text-align:center; }
+.header { display:flex; justify-content: space-between; align-items:center; margin-bottom:20px; padding:12px;
+  backdrop-filter: blur(12px); background: rgba(0,0,0,.45); border-radius: var(--radius); border:1px solid var(--line2); }
+.header .title { font-size:20px; font-weight:800; letter-spacing:.3px; }
+.header .subtitle { font-size:12px; color: var(--muted); }
+.btn { appearance:none; border:1px solid var(--line2); background: var(--glass2); color: var(--text); border-radius:999px; padding:8px 14px; font-size:12px; font-weight:700; cursor:pointer; transition: transform .08s ease, background .15s ease, border-color .15s ease; }
+.btn:hover { background: rgba(255,255,255,.12); }
+.btn:active { transform: scale(.97); }
 
-/* Sizes */
-.widget.small { grid-column: span 1; grid-row: span 1; }      /* square widget */
-.widget.wide { grid-column: span 2; grid-row: span 1; }       /* wide horizontal */
-.widget.tall { grid-column: span 1; grid-row: span 2; }       /* tall vertical */
-.widget.large { grid-column: span 2; grid-row: span 2; }      /* big square rectangle */
-.widget.short { grid-column: span 2; grid-row: span 1; height:100px; } /* short wide */
-.widget-mini { grid-column: span 1; grid-row: span 1; font-size:12px; padding:8px; }
+.grid { display:grid; gap:16px; grid-template-columns:1fr; }
+@media(min-width:900px){ .grid { grid-template-columns: repeat(2,1fr); } }
 
+.panel { display:flex; flex-direction: column; gap:12px; }
+
+.panel h2 { margin:0 0 10px; font-size:14px; letter-spacing:.4px; text-transform:uppercase; color: rgba(255,255,255,.9); }
+.panel .muted { font-size:12px; color: var(--muted); line-height:1.35; }
+
+.card-list { display:flex; flex-direction: column; gap:12px; }
+.card-item { display:flex; flex-direction: column; gap:6px; padding:16px; border-radius: var(--radius); border:1px solid var(--line); background: var(--glass); cursor:pointer; transition: transform .15s ease, box-shadow .15s ease; }
+.card-item:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.55); }
+
+.card-item .name { font-size:14px; font-weight:800; }
+.card-item .meta { font-size:11px; color: var(--muted); }
+
+/* card type variants */
+.card-item.full { width: 100%; }
+.card-item.half { width: 48%; }
+.card-item.half-wrapper { display:flex; gap:4%; flex-wrap:wrap; }
+
+/* Modal */
 .modal {
   position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,.75);
   display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition: opacity .2s ease;
@@ -72,41 +85,59 @@ body { font-family: var(--fontA); background: var(--bg); color: var(--text); min
 </style>
 </head>
 <body>
-
-<div class="grid">
-  <div class="widget small" data-detail="Small widget popup content!">
-    <div class="title">Small 1</div>
-    <div class="meta">Quick info</div>
+<div class="wrap">
+  <div class="card header">
+    <div>
+      <p class="title">Interactive Dashboard</p>
+      <p class="subtitle">Click cards to see details</p>
+    </div>
+    <div><button class="btn">Action</button></div>
   </div>
 
-  <div class="widget wide" data-detail="Wide widget popup content!">
-    <div class="title">Wide Widget</div>
-    <div class="meta">More info here</div>
-  </div>
+  <div class="grid">
+    <div class="card panel">
+      <h2>Panel 1</h2>
+      <p class="muted">Full and half cards with pop-ups.</p>
+      <div class="card-list">
+        <div class="card-item full" data-detail="This is a detailed popup for Card One."> 
+          <p class="name">Full Card One</p>
+          <p class="meta">Detailed info</p>
+        </div>
 
-  <div class="widget tall" data-detail="Tall widget popup content!">
-    <div class="title">Tall Widget</div>
-    <div class="meta">Extended info</div>
-  </div>
+        <div class="half-wrapper">
+          <div class="card-item half" data-detail="This is Half Card A details.">
+            <p class="name">Half Card A</p>
+            <p class="meta">Info snippet</p>
+          </div>
+          <div class="card-item half" data-detail="This is Half Card B details.">
+            <p class="name">Half Card B</p>
+            <p class="meta">Info snippet</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <div class="widget small" data-detail="Another small widget popup content!">
-    <div class="title">Small 2</div>
-    <div class="meta">Snippet</div>
-  </div>
+    <div class="card panel">
+      <h2>Panel 2</h2>
+      <p class="muted">Mix and match card types.</p>
+      <div class="card-list">
+        <div class="card-item full" data-detail="Full Card Alpha popup!">
+          <p class="name">Full Card Alpha</p>
+          <p class="meta">More info</p>
+        </div>
 
-  <div class="widget short" data-detail="Short wide widget popup!">
-    <div class="title">Short Wide</div>
-    <div class="meta">Compact info</div>
-  </div>
-
-  <div class="widget large" data-detail="Large widget popup content!">
-    <div class="title">Large Widget</div>
-    <div class="meta">Big info</div>
-  </div>
-
-  <div class="widget small" data-detail="Mini small widget content!">
-    <div class="title">Small 3</div>
-    <div class="meta">Snippet</div>
+        <div class="half-wrapper">
+          <div class="card-item half" data-detail="Half Card X popup info.">
+            <p class="name">Half Card X</p>
+            <p class="meta">Snippet</p>
+          </div>
+          <div class="card-item half" data-detail="Half Card Y popup info.">
+            <p class="name">Half Card Y</p>
+            <p class="meta">Snippet</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -123,9 +154,9 @@ const modal = document.getElementById('modal');
 const modalText = document.getElementById('modal-text');
 const closeBtn = document.getElementById('closeModal');
 
-document.querySelectorAll('.widget').forEach(widget => {
-  widget.addEventListener('click', () => {
-    modalText.textContent = widget.dataset.detail;
+document.querySelectorAll('.card-item').forEach(card => {
+  card.addEventListener('click', () => {
+    modalText.textContent = card.dataset.detail;
     modal.classList.add('active');
   });
 });
@@ -138,6 +169,5 @@ modal.addEventListener('click', (e) => {
   if(e.target === modal) modal.classList.remove('active');
 });
 </script>
-
 </body>
 </html>
