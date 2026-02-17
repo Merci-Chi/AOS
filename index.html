@@ -3,24 +3,22 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Advanced Editable Dashboard</title>
+<title>Nested Panel Dashboard</title>
 
 <style>
 :root{
   --radius:18px;
   --shadow:0 15px 40px rgba(0,0,0,.55);
-  --selection-glow: 0 0 15px 3px rgba(255,255,255,.8);
+  --selection-glow:0 0 15px 3px rgba(255,255,255,.8);
 }
 
 *{box-sizing:border-box;}
-
 body{
   margin:0;
   font-family:system-ui;
   background:#000;
   color:white;
   min-height:100vh;
-  transition:.3s;
 }
 
 .wrap{
@@ -31,21 +29,44 @@ body{
 
 .grid{
   display:flex;
-  flex-wrap:wrap;
+  flex-direction:column;
   gap:32px;
 }
 
+/* PANEL */
+.panel{
+  position:relative;
+  padding:20px;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:var(--radius);
+  backdrop-filter:blur(10px);
+  box-shadow:var(--shadow);
+  background:rgba(255,255,255,.05);
+}
+
+.panel.selected{
+  outline: 3px solid white;
+  box-shadow: var(--selection-glow);
+}
+
+.panel .panel-cards{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  margin-top:16px;
+}
+
+/* CARD */
 .card-item{
   position:relative;
-  padding:18px;
+  padding:16px;
   border-radius:var(--radius);
   background:rgba(0,0,0,.55);
   border:1px solid rgba(255,255,255,.15);
   cursor:pointer;
+  min-width: calc(50% - 16px);
   transition:.25s;
   user-select:none;
-  min-width: calc(50% - 16px);
-  flex-grow:1;
 }
 
 .card-item.full{
@@ -57,7 +78,7 @@ body{
 }
 
 .card-item.selected{
-  outline: 3px solid white;
+  outline:3px solid white;
   box-shadow: var(--selection-glow);
 }
 
@@ -90,7 +111,7 @@ body{
   color:white;
   font-size:22px;
   position:relative;
-  top:3px; /* align the * with + */
+  top:3px;
 }
 
 /* Modal / editor styling */
@@ -140,28 +161,29 @@ button{
 }
 </style>
 </head>
-
 <body>
 
 <div class="wrap">
-<div class="grid" id="dashboard">
-
-<div class="card-item full" data-detail="Full card popup.">
-<p class="name">Full Card One</p>
-<p class="meta">Detailed info</p>
-</div>
-
-<div class="card-item half" data-detail="Half A popup">
-<p class="name">Half Card A</p>
-<p class="meta">Snippet</p>
-</div>
-
-<div class="card-item half" data-detail="Half B popup">
-<p class="name">Half Card B</p>
-<p class="meta">Snippet</p>
-</div>
-
-</div>
+  <div class="grid" id="dashboard">
+    <!-- Example Panel -->
+    <div class="panel" data-detail="Panel 1 popup">
+      <p class="name">Panel 1</p>
+      <div class="panel-cards">
+        <div class="card-item full" data-detail="Full card inside Panel 1">
+          <p class="name">Full Card One</p>
+          <p class="meta">Info</p>
+        </div>
+        <div class="card-item half" data-detail="Half A inside Panel 1">
+          <p class="name">Half Card A</p>
+          <p class="meta">Snippet</p>
+        </div>
+        <div class="card-item half" data-detail="Half B inside Panel 1">
+          <p class="name">Half Card B</p>
+          <p class="meta">Snippet</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Bottom Controls -->
@@ -208,10 +230,11 @@ button{
 <label>Blur</label>
 <input type="range" id="editBlur" min="0" max="30">
 
-<label>Card Type</label>
+<label>Type</label>
 <select id="cardType">
 <option value="full">Full Card</option>
 <option value="half">Half Card</option>
+<option value="panel">Panel</option>
 </select>
 
 <button id="saveEdit">Save Changes</button>
@@ -220,13 +243,13 @@ button{
 </div>
 
 <script>
-let dashboard=document.getElementById("dashboard");
-let viewModal=document.getElementById("viewModal");
-let modalText=document.getElementById("modalText");
-let editor=document.getElementById("editor");
-let currentElement=null;
+const dashboard=document.getElementById("dashboard");
+const viewModal=document.getElementById("viewModal");
+const modalText=document.getElementById("modalText");
+const editor=document.getElementById("editor");
+
 let selectedCards=new Set();
-let dragged=null;
+let currentElement=null;
 
 /* -------------------------
    DRAG SYSTEM
@@ -234,23 +257,23 @@ let dragged=null;
 function enableDrag(el){
   el.setAttribute("draggable",true);
 
-  el.addEventListener("dragstart",()=>dragged=el);
+  el.addEventListener("dragstart",()=>el.classList.add("dragging"));
+  el.addEventListener("dragend",()=>el.classList.remove("dragging"));
 
   el.addEventListener("dragover",e=>e.preventDefault());
-
   el.addEventListener("drop",e=>{
     e.preventDefault();
-    const target=e.target.closest(".card-item");
-    if(!target) return;
+    const target=e.target.closest(".card-item, .panel");
+    if(!target || target===el) return;
 
-    if(selectedCards.size>1 && selectedCards.has(dragged)){
-      // Move all selected cards together
+    if(selectedCards.has(el) && selectedCards.size>1){
+      // Move all selected together
       const nodes=Array.from(selectedCards);
       const minIndex=Math.min(...nodes.map(c=>Array.from(dashboard.children).indexOf(c)));
       nodes.forEach(c=>dashboard.removeChild(c));
       nodes.forEach((c,i)=>dashboard.insertBefore(c,dashboard.children[minIndex+i] || null));
-    } else if(dragged!==target){
-      dashboard.insertBefore(dragged,target.nextSibling);
+    } else {
+      dashboard.insertBefore(el,target.nextSibling);
     }
   });
 }
@@ -269,9 +292,9 @@ function toggleSelection(el){
 }
 
 /* -------------------------
-   ADD EDIT / POPUP BEHAVIOR
+   ADD CARD/PANEL BEHAVIOR
 ------------------------- */
-function addCardBehavior(el){
+function addBehavior(el){
   enableDrag(el);
 
   el.addEventListener("mousedown",e=>{
@@ -294,9 +317,9 @@ function addCardBehavior(el){
 }
 
 /* -------------------------
-   INITIAL CARDS
+   INITIAL ELEMENTS
 ------------------------- */
-document.querySelectorAll(".card-item").forEach(addCardBehavior);
+document.querySelectorAll(".panel, .card-item").forEach(addBehavior);
 
 /* -------------------------
    CLOSE VIEW MODAL
@@ -304,39 +327,37 @@ document.querySelectorAll(".card-item").forEach(addCardBehavior);
 function closeView(){viewModal.classList.remove("active");}
 
 /* -------------------------
-   ADD PANEL OR CARD
+   ADD BUTTON
 ------------------------- */
 document.getElementById("addBtn").addEventListener("click",()=>{
-  const typeChoice=prompt("Add a 'panel' or 'card'?").toLowerCase();
-  if(typeChoice!=="panel" && typeChoice!=="card") return alert("Invalid choice");
+  const choice=prompt("Add 'panel' or 'card'?").toLowerCase();
+  if(choice!=="panel" && choice!=="card") return alert("Invalid choice");
 
-  // Pre-fill editor before creation
-  currentElement=document.createElement("div");
-  if(typeChoice==="card"){
-    currentElement.className="card-item";
-    const cardTypeChoice=prompt("Card type: 'full' or 'half'?").toLowerCase();
-    if(cardTypeChoice==="half") currentElement.classList.add("half");
-    else currentElement.classList.add("full");
-    currentElement.dataset.detail="New card popup";
-    currentElement.innerHTML=`<p class="name">New Card</p><p class="meta">New Info</p>`;
-  } else if(typeChoice==="panel"){
+  currentElement=document.createElement(choice==="panel"?"div":"div");
+  if(choice==="panel"){
+    currentElement.className="panel";
+    currentElement.dataset.detail="New Panel popup";
+    currentElement.innerHTML='<p class="name">New Panel</p><div class="panel-cards"></div>';
+  } else {
     currentElement.className="card-item full";
-    currentElement.dataset.detail="New panel popup";
-    currentElement.innerHTML=`<p class="name">New Panel</p><p class="meta">Panel Info</p>`;
+    currentElement.dataset.detail="New Card popup";
+    currentElement.innerHTML='<p class="name">New Card</p><p class="meta">Info</p>';
+    // put into last panel by default
+    const lastPanel=dashboard.querySelector(".panel:last-child .panel-cards");
+    if(lastPanel) lastPanel.appendChild(currentElement);
   }
 
-  addCardBehavior(currentElement);
+  addBehavior(currentElement);
   editor.classList.add("active");
 });
 
 /* -------------------------
-   EDIT SELECTED BUTTON
+   EDIT SELECTED
 ------------------------- */
 document.getElementById("editSelectedBtn").addEventListener("click",()=>{
   if(selectedCards.size===0) return;
   currentElement=null;
   editor.classList.add("active");
-  // Pre-fill editor with first selected
   const first=selectedCards.values().next().value;
   const nameEl=first.querySelector(".name");
   if(nameEl){
@@ -344,16 +365,8 @@ document.getElementById("editSelectedBtn").addEventListener("click",()=>{
     editTextSize.value=parseInt(getComputedStyle(nameEl).fontSize);
     editTextColor.value=rgbToHex(getComputedStyle(nameEl).color);
   }
-  cardType.value=first.classList.contains("half")?"half":"full";
-});
-
-/* -------------------------
-   REMOVE IMAGE
-------------------------- */
-document.getElementById("removeImage").addEventListener("click",()=>{
-  selectedCards.forEach(c=>c.style.backgroundImage="");
-  if(currentElement) currentElement.style.backgroundImage="";
-  editBgFile.value="";
+  if(first.classList.contains("panel")) cardType.value="panel";
+  else cardType.value=first.classList.contains("half")?"half":"full";
 });
 
 /* -------------------------
@@ -371,17 +384,16 @@ document.getElementById("saveEdit").addEventListener("click",()=>{
       nameEl.style.fontSize=editTextSize.value+"px";
     }
 
-    // Card type
     const type=cardType.value;
-    current.classList.remove("full","half");
-    current.classList.add(type);
+    current.classList.remove("panel","full","half");
+    if(type==="panel") current.classList.add("panel");
+    else current.classList.add(type);
 
     const color=editBoxColor.value;
     const gradient=gradientSelect.value;
-
     if(gradient==="linear"){
       current.style.backgroundImage=`linear-gradient(135deg,${color},black)`;
-    }else{
+    } else {
       current.style.backgroundColor=color;
     }
 
@@ -402,7 +414,6 @@ document.getElementById("saveEdit").addEventListener("click",()=>{
   selectedCards.clear();
   editor.classList.remove("active");
 
-  // Append new card if created
   if(!dashboard.contains(currentElement) && currentElement){
     dashboard.appendChild(currentElement);
   }
