@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -8,6 +9,7 @@
 :root{
   --radius:18px;
   --shadow:0 15px 40px rgba(0,0,0,.55);
+  --selection-glow: 0 0 15px 3px rgba(255,255,255,.8);
 }
 
 *{box-sizing:border-box;}
@@ -28,12 +30,13 @@ body{
 }
 
 .grid{
-  display:grid;
-  gap:48px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:32px;
 }
 
 @media(min-width:900px){
-  .grid{grid-template-columns:repeat(2,1fr);}
+  .grid{gap:32px;}
 }
 
 .card{
@@ -44,6 +47,7 @@ body{
   backdrop-filter:blur(12px);
   border:1px solid rgba(255,255,255,.15);
   box-shadow:var(--shadow);
+  width:100%;
 }
 
 .card-item{
@@ -55,37 +59,25 @@ body{
   cursor:pointer;
   transition:.25s;
   user-select:none;
+  min-width: calc(50% - 16px);
+  flex-grow:1;
 }
 
-.card-item:hover{transform:translateY(-3px);}
-
-.name{font-weight:800;font-size:16px;}
-.meta{font-size:12px;opacity:.7;}
-
-.half-wrapper{
-  display:flex;
-  gap:32px;
-  flex-wrap:wrap;
-  margin-top:32px;
+.card-item.full{
+  min-width:100%;
 }
 
 .card-item.half{
-  flex:1 1 calc(50% - 16px);
+  min-width: calc(50% - 16px);
 }
 
-.edit-btn{
-  position:absolute;
-  top:10px;
-  right:10px;
-  width:24px;
-  height:24px;
-  border-radius:50%;
-  border:1px solid white;
-  cursor:pointer;
-  opacity:.7;
-  transition:.2s;
+.card-item.selected{
+  outline: 3px solid white;
+  box-shadow: var(--selection-glow);
 }
-.edit-btn:hover{opacity:1;}
+
+.name{font-weight:800;font-size:16px;}
+.meta{font-size:12px;opacity:.7;}
 
 .modal,.editor{
   position:fixed;
@@ -113,6 +105,8 @@ body{
   display:flex;
   flex-direction:column;
   gap:14px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 input,select{
@@ -142,17 +136,12 @@ button{
 <body>
 
 <div class="wrap">
-<div class="grid">
-
-<div class="card">
-<h2>Panel 1</h2>
+<div class="grid" id="dashboard">
 
 <div class="card-item full" data-detail="Full card popup.">
 <p class="name">Full Card One</p>
 <p class="meta">Detailed info</p>
 </div>
-
-<div class="half-wrapper">
 
 <div class="card-item half" data-detail="Half A popup">
 <p class="name">Half Card A</p>
@@ -167,10 +156,8 @@ button{
 </div>
 
 <button id="addCardBtn">+ Add Card</button>
+<button id="editSelectedBtn">Edit Selected</button>
 
-</div>
-
-</div>
 </div>
 
 <!-- View Modal -->
@@ -223,15 +210,13 @@ button{
 </div>
 
 <script>
-
-let currentElement=null;
 let dragged=null;
-
+const dashboard=document.getElementById("dashboard");
 const viewModal=document.getElementById("viewModal");
 const modalText=document.getElementById("modalText");
 const editor=document.getElementById("editor");
-
-function closeView(){viewModal.classList.remove("active");}
+let currentElement=null;
+let selectedCards=new Set();
 
 /* -------------------------
    DRAG SYSTEM
@@ -246,41 +231,56 @@ function enableDrag(el){
   el.addEventListener("drop",e=>{
     e.preventDefault();
     const target=e.target.closest(".card-item");
-    if(target && dragged!==target){
-      const parent=target.parentNode;
-      parent.insertBefore(dragged,target.nextSibling);
+    if(!target) return;
+
+    if(selectedCards.size>1 && selectedCards.has(dragged)){
+      // Move all selected cards together
+      const positions=Array.from(selectedCards).map(c=>Array.from(dashboard.children).indexOf(c));
+      positions.sort((a,b)=>a-b);
+      const minIndex=positions[0];
+      positions.forEach(c=>{
+        dashboard.removeChild(c);
+      });
+      dashboard.insertBefore(...selectedCards, dashboard.children[minIndex] || null);
+    } else if(dragged!==target){
+      dashboard.insertBefore(dragged,target.nextSibling);
     }
   });
+}
+
+/* -------------------------
+   CARD SELECTION
+------------------------- */
+function toggleSelection(el){
+  if(selectedCards.has(el)){
+    selectedCards.delete(el);
+    el.classList.remove("selected");
+  } else {
+    selectedCards.add(el);
+    el.classList.add("selected");
+  }
 }
 
 /* -------------------------
    EDIT BUTTON
 ------------------------- */
 function addEditButton(el){
-  const btn=document.createElement("div");
-  btn.className="edit-btn";
-  el.appendChild(btn);
+  el.addEventListener("mousedown",e=>{
+    if(e.button!==0) return;
+    e.preventDefault();
+    toggleSelection(el);
+  });
 
-  btn.addEventListener("click",(e)=>{
-    e.stopPropagation();
-    currentElement=el;
-
-    const nameEl=el.querySelector?.(".name");
-
-    if(nameEl){
-      editText.value=nameEl.textContent;
-      editTextSize.value=parseInt(getComputedStyle(nameEl).fontSize);
-      editTextColor.value=rgbToHex(getComputedStyle(nameEl).color);
+  el.addEventListener("click",e=>{
+    if(selectedCards.size>0 && !selectedCards.has(el)){
+      toggleSelection(el);
+      e.stopPropagation();
+      return;
     }
-
-    // Detect type
-    if(el.classList.contains("half")){
-      cardType.value="half";
-    }else{
-      cardType.value="full";
+    if(selectedCards.size===0){
+      modalText.textContent=el.dataset.detail;
+      viewModal.classList.add("active");
     }
-
-    editor.classList.add("active");
   });
 }
 
@@ -290,10 +290,6 @@ function addEditButton(el){
 document.querySelectorAll(".card-item").forEach(el=>{
   enableDrag(el);
   addEditButton(el);
-  el.addEventListener("click",()=>{
-    modalText.textContent=el.dataset.detail;
-    viewModal.classList.add("active");
-  });
 });
 
 /* -------------------------
@@ -304,22 +300,40 @@ document.getElementById("addCardBtn").addEventListener("click",()=>{
   const newCard=document.createElement("div");
   newCard.className="card-item";
   if(type==="half") newCard.classList.add("half");
+  else newCard.classList.add("full");
   newCard.innerHTML=`<p class="name">New Card</p><p class="meta">New Info</p>`;
   enableDrag(newCard);
   addEditButton(newCard);
-  newCard.addEventListener("click",()=>{
-    modalText.textContent="New card popup";
-    viewModal.classList.add("active");
-  });
-  document.querySelector(".card").appendChild(newCard);
+  dashboard.appendChild(newCard);
+});
+
+/* -------------------------
+   EDIT SELECTED
+------------------------- */
+document.getElementById("editSelectedBtn").addEventListener("click",()=>{
+  if(selectedCards.size===0) return;
+  currentElement=null;
+  editor.classList.add("active");
+
+  // Pre-fill with first selected card values
+  const first=selectedCards.values().next().value;
+  const nameEl=first.querySelector(".name");
+  if(nameEl){
+    editText.value=nameEl.textContent;
+    editTextSize.value=parseInt(getComputedStyle(nameEl).fontSize);
+    editTextColor.value=rgbToHex(getComputedStyle(nameEl).color);
+  }
+  if(first.classList.contains("half")) cardType.value="half";
+  else cardType.value="full";
 });
 
 /* -------------------------
    REMOVE IMAGE
 ------------------------- */
 document.getElementById("removeImage").addEventListener("click",()=>{
-  if(!currentElement)return;
-  currentElement.style.backgroundImage="";
+  selectedCards.forEach(c=>{
+    c.style.backgroundImage="";
+  });
   editBgFile.value="";
 });
 
@@ -327,44 +341,43 @@ document.getElementById("removeImage").addEventListener("click",()=>{
    SAVE EDITS
 ------------------------- */
 document.getElementById("saveEdit").addEventListener("click",()=>{
+  selectedCards.forEach(current=>{
+    const nameEl=current.querySelector(".name");
+    if(nameEl){
+      nameEl.textContent=editText.value;
+      nameEl.style.color=editTextColor.value;
+      nameEl.style.fontSize=editTextSize.value+"px";
+    }
 
-  if(!currentElement)return;
+    // Card type
+    const type=cardType.value;
+    current.classList.remove("full","half");
+    current.classList.add(type);
 
-  const nameEl=currentElement.querySelector?.(".name");
+    const color=editBoxColor.value;
+    const gradient=gradientSelect.value;
 
-  if(nameEl){
-    nameEl.textContent=editText.value;
-    nameEl.style.color=editTextColor.value;
-    nameEl.style.fontSize=editTextSize.value+"px";
-  }
+    if(gradient==="linear"){
+      current.style.backgroundImage=`linear-gradient(135deg,${color},black)`;
+    }else{
+      current.style.backgroundColor=color;
+    }
 
-  // Handle card type change
-  const type=cardType.value;
-  if(type==="half") currentElement.classList.add("half");
-  else currentElement.classList.remove("half");
+    if(editBgFile.files[0]){
+      const reader=new FileReader();
+      reader.onload=e=>{
+        current.style.backgroundImage=`url(${e.target.result})`;
+        current.style.backgroundSize="cover";
+        current.style.backgroundPosition="center";
+      };
+      reader.readAsDataURL(editBgFile.files[0]);
+      editBgFile.value="";
+    }
 
-  const color=editBoxColor.value;
-  const gradient=gradientSelect.value;
-
-  if(gradient==="linear"){
-    currentElement.style.backgroundImage=`linear-gradient(135deg,${color},black)`;
-  }else{
-    currentElement.style.backgroundColor=color;
-  }
-
-  if(editBgFile.files[0]){
-    const reader=new FileReader();
-    reader.onload=e=>{
-      currentElement.style.backgroundImage=`url(${e.target.result})`;
-      currentElement.style.backgroundSize="cover";
-      currentElement.style.backgroundPosition="center";
-    };
-    reader.readAsDataURL(editBgFile.files[0]);
-    editBgFile.value="";
-  }
-
-  currentElement.style.backdropFilter=`blur(${editBlur.value}px)`;
-
+    current.style.backdropFilter=`blur(${editBlur.value}px)`;
+    current.classList.remove("selected");
+  });
+  selectedCards.clear();
   editor.classList.remove("active");
 });
 
