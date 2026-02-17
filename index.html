@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Advanced Editable Dashboard</title>
 
@@ -212,6 +212,12 @@ button{
 <label>Blur</label>
 <input type="range" id="editBlur" min="0" max="30">
 
+<label>Card Type</label>
+<select id="cardType">
+<option value="full">Full Card</option>
+<option value="half">Half Card</option>
+</select>
+
 <button id="saveEdit">Save Changes</button>
 
 </div>
@@ -228,6 +234,9 @@ const editor=document.getElementById("editor");
 
 function closeView(){viewModal.classList.remove("active");}
 
+/* -------------------------
+   DRAG SYSTEM
+------------------------- */
 function enableDrag(el){
   el.setAttribute("draggable",true);
 
@@ -239,13 +248,16 @@ function enableDrag(el){
     e.preventDefault();
     const target=e.target.closest(".card-item");
     if(target && dragged!==target){
-      target.parentNode.insertBefore(dragged,target);
+      const parent=target.parentNode;
+      parent.insertBefore(dragged,target.nextSibling);
     }
   });
 }
 
+/* -------------------------
+   EDIT BUTTON
+------------------------- */
 function addEditButton(el){
-
   const btn=document.createElement("div");
   btn.className="edit-btn";
   el.appendChild(btn);
@@ -262,38 +274,59 @@ function addEditButton(el){
       editTextColor.value=rgbToHex(getComputedStyle(nameEl).color);
     }
 
+    // Detect type
+    if(el.classList.contains("half")){
+      cardType.value="half";
+    }else{
+      cardType.value="full";
+    }
+
     editor.classList.add("active");
   });
 }
 
+/* -------------------------
+   INITIAL CARDS SETUP
+------------------------- */
 document.querySelectorAll(".card-item").forEach(el=>{
   enableDrag(el);
   addEditButton(el);
-
   el.addEventListener("click",()=>{
     modalText.textContent=el.dataset.detail;
     viewModal.classList.add("active");
   });
 });
 
-document.querySelectorAll(".card").forEach(addEditButton);
-addEditButton(document.body);
-
+/* -------------------------
+   ADD NEW CARD
+------------------------- */
 document.getElementById("addCardBtn").addEventListener("click",()=>{
-  const card=document.createElement("div");
-  card.className="card-item";
-  card.innerHTML=`<p class="name">New Card</p><p class="meta">New Info</p>`;
-  enableDrag(card);
-  addEditButton(card);
-  document.querySelector(".card").appendChild(card);
+  const type=prompt("Enter card type: 'full' or 'half'").toLowerCase();
+  const newCard=document.createElement("div");
+  newCard.className="card-item";
+  if(type==="half") newCard.classList.add("half");
+  newCard.innerHTML=`<p class="name">New Card</p><p class="meta">New Info</p>`;
+  enableDrag(newCard);
+  addEditButton(newCard);
+  newCard.addEventListener("click",()=>{
+    modalText.textContent="New card popup";
+    viewModal.classList.add("active");
+  });
+  document.querySelector(".card").appendChild(newCard);
 });
 
+/* -------------------------
+   REMOVE IMAGE
+------------------------- */
 document.getElementById("removeImage").addEventListener("click",()=>{
   if(!currentElement)return;
   currentElement.style.backgroundImage="";
   editBgFile.value="";
 });
 
+/* -------------------------
+   SAVE EDITS
+------------------------- */
 document.getElementById("saveEdit").addEventListener("click",()=>{
 
   if(!currentElement)return;
@@ -306,12 +339,16 @@ document.getElementById("saveEdit").addEventListener("click",()=>{
     nameEl.style.fontSize=editTextSize.value+"px";
   }
 
+  // Handle card type change
+  const type=cardType.value;
+  if(type==="half") currentElement.classList.add("half");
+  else currentElement.classList.remove("half");
+
   const color=editBoxColor.value;
   const gradient=gradientSelect.value;
 
   if(gradient==="linear"){
-    currentElement.style.backgroundImage=
-      `linear-gradient(135deg,${color},black)`;
+    currentElement.style.backgroundImage=`linear-gradient(135deg,${color},black)`;
   }else{
     currentElement.style.backgroundColor=color;
   }
@@ -319,8 +356,7 @@ document.getElementById("saveEdit").addEventListener("click",()=>{
   if(editBgFile.files[0]){
     const reader=new FileReader();
     reader.onload=e=>{
-      currentElement.style.backgroundImage=
-        `url(${e.target.result})`;
+      currentElement.style.backgroundImage=`url(${e.target.result})`;
       currentElement.style.backgroundSize="cover";
       currentElement.style.backgroundPosition="center";
     };
@@ -328,16 +364,21 @@ document.getElementById("saveEdit").addEventListener("click",()=>{
     editBgFile.value="";
   }
 
-  currentElement.style.backdropFilter=
-    `blur(${editBlur.value}px)`;
+  currentElement.style.backdropFilter=`blur(${editBlur.value}px)`;
 
   editor.classList.remove("active");
 });
 
+/* -------------------------
+   CLOSE EDITOR
+------------------------- */
 editor.addEventListener("click",e=>{
-  if(e.target===editor)editor.classList.remove("active");
+  if(e.target===editor) editor.classList.remove("active");
 });
 
+/* -------------------------
+   COLOR HELPER
+------------------------- */
 function rgbToHex(rgb){
   const result=rgb.match(/\d+/g);
   return "#"+result.map(x=>{
