@@ -35,7 +35,7 @@ body {
   box-shadow:var(--shadow);
 }
 
-.grid { display:grid; gap:16px; }
+.grid { display:grid; gap:32px; }
 @media(min-width:900px){
   .grid { grid-template-columns:repeat(2,1fr); }
 }
@@ -54,7 +54,11 @@ body {
 .name { font-weight:800; font-size:14px; }
 .meta { font-size:11px; opacity:.7; }
 
-.half-wrapper { display:flex; gap:16px; flex-wrap:wrap; }
+.half-wrapper { display:flex; gap:24px; flex-wrap:wrap; }
+
+.card-item {
+  margin-bottom: 20px;
+}
 .card-item.half { flex:1 1 calc(50% - 8px); }
 
 /* Edit Button */
@@ -136,7 +140,7 @@ button{
 <p class="meta">Snippet</p>
 </div>
 </div>
-
+<button id="addCardBtn">+ Add Card</button>
 </div>
 
 </div>
@@ -189,88 +193,168 @@ const modalText = document.getElementById('modal-text');
 const closeModal = document.getElementById('closeModal');
 const editorModal = document.getElementById('editorModal');
 
-let currentCard = null;
+let currentElement = null;
 
-/* Remove image */
-document.getElementById('removeImage').addEventListener('click', () => {
-  if(currentCard){
-    currentCard.style.backgroundImage = "";
-    document.getElementById('editBgFile').value = "";
+/* -----------------------
+   DRAG SYSTEM
+----------------------- */
+
+let draggedItem = null;
+
+document.addEventListener("dragstart", e=>{
+  if(e.target.classList.contains("card-item")){
+    draggedItem = e.target;
   }
 });
 
-/* View popup + Edit button */
-document.querySelectorAll('.card-item').forEach(card => {
+document.addEventListener("dragover", e=>{
+  e.preventDefault();
+});
 
-  card.addEventListener('click', () => {
-    modalText.textContent = card.dataset.detail;
-    modal.classList.add('active');
-  });
+document.addEventListener("drop", e=>{
+  if(e.target.classList.contains("card-item")){
+    e.target.parentNode.insertBefore(draggedItem, e.target);
+  }
+});
 
-  const editBtn = document.createElement('div');
-  editBtn.classList.add('edit-btn');
-  card.appendChild(editBtn);
+/* Make cards draggable */
+function enableDrag(el){
+  el.setAttribute("draggable", true);
+}
 
-  editBtn.addEventListener('click', (e)=>{
+/* -----------------------
+   EDIT BUTTON SYSTEM
+----------------------- */
+
+function addEditButton(el){
+
+  el.style.position = "relative";
+
+  const editBtn = document.createElement("div");
+  editBtn.classList.add("edit-btn");
+  el.appendChild(editBtn);
+
+  editBtn.addEventListener("click", (e)=>{
     e.stopPropagation();
-    currentCard = card;
+    currentElement = el;
 
-    const nameEl = card.querySelector('.name');
+    const nameEl = el.querySelector(".name");
 
-    document.getElementById('editText').value = nameEl.textContent;
-    document.getElementById('editTextSize').value =
-      parseInt(getComputedStyle(nameEl).fontSize);
-    document.getElementById('editTextColor').value =
-      rgbToHex(getComputedStyle(nameEl).color);
+    if(nameEl){
+      document.getElementById('editText').value = nameEl.textContent;
+      document.getElementById('editTextSize').value =
+        parseInt(getComputedStyle(nameEl).fontSize);
+      document.getElementById('editTextColor').value =
+        rgbToHex(getComputedStyle(nameEl).color);
+    }
 
-    editorModal.classList.add('active');
+    editorModal.classList.add("active");
   });
+}
 
+/* Apply to existing cards */
+document.querySelectorAll(".card-item").forEach(card=>{
+  enableDrag(card);
+  addEditButton(card);
+
+  card.addEventListener("click", ()=>{
+    modalText.textContent = card.dataset.detail;
+    modal.classList.add("active");
+  });
 });
 
-/* Close view modal */
-closeModal.onclick = () => modal.classList.remove('active');
-modal.onclick = (e)=>{ if(e.target===modal) modal.classList.remove('active'); };
+/* -----------------------
+   ADD NEW CARD
+----------------------- */
 
-/* Save edits */
-document.getElementById('saveEdit').onclick = ()=>{
+document.getElementById("addCardBtn")?.addEventListener("click", ()=>{
 
-  const nameEl = currentCard.querySelector('.name');
+  const newCard = document.createElement("div");
+  newCard.className = "card-item";
+  newCard.innerHTML = `
+    <p class="name">New Card</p>
+    <p class="meta">New Info</p>
+  `;
 
-  nameEl.textContent = document.getElementById('editText').value;
-  nameEl.style.color = document.getElementById('editTextColor').value;
-  nameEl.style.fontSize =
-    document.getElementById('editTextSize').value + "px";
+  enableDrag(newCard);
+  addEditButton(newCard);
 
-  const boxColor = document.getElementById('editBoxColor').value;
-  const gradient = document.getElementById('gradientSelect').value;
+  newCard.addEventListener("click", ()=>{
+    modalText.textContent = "New card popup.";
+    modal.classList.add("active");
+  });
 
-  if(gradient === "linear"){
-    currentCard.style.background =
-      `linear-gradient(135deg, ${boxColor}, black)`;
-  } else {
-    currentCard.style.background = boxColor;
+  document.querySelector(".card").appendChild(newCard);
+});
+
+/* -----------------------
+   REMOVE IMAGE
+----------------------- */
+
+document.getElementById("removeImage").addEventListener("click", ()=>{
+  if(currentElement){
+    currentElement.style.backgroundImage = "";
+    document.getElementById("editBgFile").value = "";
+  }
+});
+
+/* -----------------------
+   SAVE EDITS
+----------------------- */
+
+document.getElementById("saveEdit").onclick = ()=>{
+
+  if(!currentElement) return;
+
+  const nameEl = currentElement.querySelector(".name");
+
+  if(nameEl){
+    nameEl.textContent = document.getElementById("editText").value;
+    nameEl.style.color = document.getElementById("editTextColor").value;
+    nameEl.style.fontSize =
+      document.getElementById("editTextSize").value + "px";
   }
 
-  const fileInput = document.getElementById('editBgFile');
+  const boxColor = document.getElementById("editBoxColor").value;
+  const gradient = document.getElementById("gradientSelect").value;
+
+  if(gradient==="linear"){
+    currentElement.style.background =
+      `linear-gradient(135deg, ${boxColor}, black)`;
+  }else{
+    currentElement.style.background = boxColor;
+  }
+
+  const fileInput = document.getElementById("editBgFile");
 
   if(fileInput.files && fileInput.files[0]){
     const reader = new FileReader();
 
     reader.onload = function(e){
-      currentCard.style.backgroundImage = `url(${e.target.result})`;
-      currentCard.style.backgroundSize = "cover";
-      currentCard.style.backgroundPosition = "center";
+      currentElement.style.backgroundImage =
+        `url(${e.target.result})`;
+      currentElement.style.backgroundSize = "cover";
+      currentElement.style.backgroundPosition = "center";
     };
 
     reader.readAsDataURL(fileInput.files[0]);
     fileInput.value = "";
   }
 
-  editorModal.classList.remove('active');
+  editorModal.classList.remove("active");
 };
 
-/* Helper */
+/* -----------------------
+   CLOSE MODAL
+----------------------- */
+
+closeModal.onclick = ()=> modal.classList.remove("active");
+modal.onclick = e=>{ if(e.target===modal) modal.classList.remove("active"); };
+
+/* -----------------------
+   COLOR HELPER
+----------------------- */
+
 function rgbToHex(rgb){
   const result = rgb.match(/\d+/g);
   return "#" + result.map(x=>{
@@ -278,6 +362,14 @@ function rgbToHex(rgb){
     return hex.length==1 ? "0"+hex : hex;
   }).join('');
 }
+
+/* -----------------------
+   MAKE PANELS EDITABLE
+----------------------- */
+
+document.querySelectorAll(".card").forEach(panel=>{
+  addEditButton(panel);
+});
 
 </script>
 </body>
