@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apex Optimization System (AOS)</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #0f0f0f;
+    color: #ffffff;
+}
+
+header {
+    background: #111827;
+    padding: 20px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.container {
+    padding: 20px;
+    max-width: 900px;
+    margin: auto;
+}
+
+.section {
+    background: #1f2937;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.section button {
+    width: 100%;
+    background: #111827;
+    color: white;
+    padding: 15px;
+    border: none;
+    text-align: left;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.section button:hover {
+    background: #374151;
+}
+
+.content {
+    display: none;
+    padding: 15px;
+    background: #1f2937;
+}
+
+ul {
+    list-style: none;
+    padding-left: 15px;
+}
+
+li {
+    margin-bottom: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+Apex Optimization System (AOS)
+</header>
+
+<div class="container">
+
+<!-- DAILY FOUNDATION -->
+<div class="section">
+<button onclick="toggleSection('daily')">1) Daily Foundation</button>
+<div class="content" id="daily">
+<ul>
+<li>Morning Routine</li>
+<li>Hygiene Routine</li>
+<li>Weekly Rhythm</li>
+<li>Nightly Routine</li>
+<li>Cleaning Schedule</li>
+</ul>
+</div>
+</div>
+
+<!-- HEALTH & ENERGY -->
+<div class="section">
+<button onclick="toggleSection('health')">2) Health & Energy</button>
+<div class="content" id="health">
+<ul>
+<li><strong>Structured Consumption</strong>
+    <ul>
+        <li>Breakfast (Time: ___)</li>
+        <li>Lunch (Time: ___)</li>
+        <li>Dinner (Time: ___)</li>
+        <li>Snacks (Time: ___)</li>
+    </ul>
+</li>
+<br>
+<li><strong>Internal</strong>
+    <ul>
+        <li>Emotional exhaustion</li>
+        <li>Detachment</li>
+        <li>Loss of motivation</li>
+        <li>Compulsive shopping</li>
+    </ul>
+</li>
+<br>
+<li><strong>External</strong>
+    <ul>
+        <li>Physical exhaustion</li>
+        <li>Insomnia</li>
+        <li>Forgetfulness</li>
+        <li>Isolation</li>
+        <li>Escapism</li>
+        <li>Irritability</li>
+        <li>Procrastination</li>
+    </ul>
+</li>
+<br>
+<li><strong>Physical Training</strong>
+    <ul>
+        <li>Strength Days</li>
+        <li>Conditioning Days</li>
+        <li>Recovery Protocol</li>
+    </ul>
+</li>
+</ul>
+</div>
+</div>
+
+<!-- LIFE INSURANCE -->
+<div class="section">
+<button onclick="toggleSection('insurance')">3) Professional Growth — Life Insurance</button>
+<div class="content" id="insurance">
+<ul>
+<li>Licensing Progress</li>
+<li>Study System</li>
+<li>Sales Skill Development</li>
+<li>Client Communication Framework</li>
+<li>Future Expansion (IULs, Financial Education)</li>
+</ul>
+</div>
+</div>
+
+<!-- RESOURCES -->
+<div class="section">
+<button onclick="toggleSection('resources')">4) Resources</button>
+<div class="content" id="resources">
+<ul>
+<li>Websites & Tools</li>
+<li>Places & Services</li>
+<li>Medical Information</li>
+<li>Networking & Contacts</li>
+<li>Personal Development</li>
+<li>Finances & Inventory</li>
+<li>Nox Auction Keywords</li>
+<li>Legal</li>
+</ul>
+</div>
+</div>
+
+<!-- FUTURE -->
+<div class="section">
+<button onclick="toggleSection('future')">5) Future</button>
+<div class="content" id="future">
+<ul>
+<li>House</li>
+<li>Wedding</li>
+<li>Kids</li>
+</ul>
+</div>
+</div>
+
+<!-- ME -->
+<div class="section">
+<button onclick="toggleSection('me')">6) Me</button>
+<div class="content" id="me">
+<ul>
+<li>Identity Standards</li>
+<li>Values</li>
+<li>Non-Negotiables</li>
+<li>Growth Areas</li>
+<li>Personal Code</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<script>
+function toggleSection(id) {
+    const section = document.getElementById(id);
+    section.style.display = section.style.display === "block" ? "none" : "block";
+}
+</script>
+
+</body>
+</html>
