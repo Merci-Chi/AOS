@@ -1,452 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Apex Optimization System</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Apex Optimization System (AOS)</title>
 
-  <link rel="manifest" href="assets/utilities/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Luckiest+Guy&display=swap" rel="stylesheet">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Luckiest+Guy&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --glass: rgba(0,0,0,.55);
+    --glass2: rgba(0,0,0,.32);
+    --line: rgba(255,255,255,.20);
+    --line2: rgba(255,255,255,.38);
+    --glow: rgba(255,255,255,.14);
+    --text: rgba(255,255,255,.95);
+    --muted: rgba(255,255,255,.72);
+    --muted2: rgba(255,255,255,.55);
+    --shadow: 0 10px 28px rgba(0,0,0,.45);
+    --radius: 18px;
+    --bg-dark: #0a0a0a;
+    --bg-darker: #050505;
+    --highlight: #333;
+  }
 
-  <style>
-    :root{
-      --glass: rgba(0,0,0,.55);
-      --glass2: rgba(0,0,0,.32);
-      --line: rgba(255,255,255,.20);
-      --line2: rgba(255,255,255,.38);
-      --glow: rgba(255,255,255,.14);
-      --text: rgba(255,255,255,.95);
-      --muted: rgba(255,255,255,.72);
-      --muted2: rgba(255,255,255,.55);
-      --shadow: 0 10px 28px rgba(0,0,0,.45);
-      --radius: 18px;
-    }
+  *{ box-sizing:border-box; }
 
-    *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body{
+    height:100%;
+    margin:0;
+    padding:0;
+    background: var(--bg-dark);
+    font-family: 'Architects Daughter', cursive;
+    color: var(--text);
+  }
 
-    html, body{
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      background: #000;
-      overflow-x: hidden;
-      color: var(--text);
-      font-family: 'Architects Daughter', cursive;
-    }
+  body{
+    padding: 18px;
+  }
 
-    body{
-      position: relative;
-      background:
-        radial-gradient(1200px 900px at 50% 20%, rgba(255,255,255,.10), transparent 60%),
-        linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 16%, rgba(0,0,0,0) 84%, rgba(0,0,0,1) 100%),
-        url('assets/images/forest.jpg') no-repeat center center fixed;
-      background-size: cover;
-      padding: 18px 18px 150px;
-    }
+  .page{
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
 
-    .overlay{
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(900px 700px at 50% 25%, rgba(0,0,0,.25), rgba(0,0,0,.82)),
-        linear-gradient(to bottom, rgba(0,0,0,.28), rgba(0,0,0,.74));
-      z-index: 0;
-      pointer-events: none;
-    }
+  h1#currentDate{
+    font-family: 'Luckiest Guy', cursive;
+    text-align: center;
+    font-size: clamp(1.8rem,5vw,2.6rem);
+    margin-bottom: 12px;
+  }
 
-    .page{
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 860px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+  .card, .headerCard{
+    background: var(--bg-darker);
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
 
-    #currentDate{
-      font-family: 'Luckiest Guy', cursive;
-      margin: 2px 0 6px;
-      letter-spacing: 1px;
-      font-size: clamp(1.8rem, 5.6vw, 2.65rem);
-      line-height: 1.05;
-      text-align: center;
-      text-shadow: 0 10px 22px rgba(0,0,0,.55);
-    }
+  .sectionTitle{
+    font-family: 'Luckiest Guy', cursive;
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
 
-    .headerCard, .card{
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background:
-        linear-gradient(180deg, rgba(0,0,0,.68), rgba(0,0,0,.28));
-      box-shadow: var(--shadow), 0 0 18px var(--glow);
-      padding: 16px;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      overflow: hidden;
-    }
+  .subSection{
+    margin: 12px 0;
+    padding: 10px;
+    border: 1px solid var(--line2);
+    border-radius: 12px;
+    background: var(--highlight);
+  }
 
-    .headerCard::before, .card::before{
-      content: "";
-      display: block;
-      height: 1px;
-      width: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
-      margin: -16px 0 14px;
-      opacity: .9;
-    }
+  .subSection h3{
+    margin:0 0 6px;
+    font-size: 1.1rem;
+  }
 
-    .subRow, .upcomingRow{
-      margin: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+  textarea, input{
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border-radius: 12px;
+    border: 1px solid var(--line2);
+    background: var(--bg-dark);
+    color: var(--text);
+  }
 
-    .sectionTitle{
-      font-family: 'Luckiest Guy', cursive;
-      font-size: 1.28rem;
-      letter-spacing: .7px;
-      margin: 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      text-shadow: 0 10px 22px rgba(0,0,0,.55);
-    }
-
-    .pill{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      height: 32px;
-      padding: 0 12px;
-      font-size: 0.92rem;
-      font-family: 'Luckiest Guy', cursive;
-      letter-spacing: .6px;
-      border-radius: 999px;
-      border: 1px solid var(--line2);
-      background: rgba(0,0,0,.38);
-      box-shadow: 0 0 12px rgba(255,255,255,.08);
-      color: var(--text);
-      white-space: nowrap;
-      user-select: none;
-    }
-    button.pill{ width: auto !important; }
-
-    .sectionBreak{
-      height: 1px;
-      width: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.30), transparent);
-      margin: 2px 0;
-    }
-
-    #todayTasks, #taskList{
-      list-style: none;
-      padding: 0;
-      margin: 12px 0 0;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    #todayTasks li, #taskList li{
-      border: 1px solid rgba(255,255,255,.18);
-      border-radius: 14px;
-      background: linear-gradient(180deg, rgba(0,0,0,.34), rgba(0,0,0,.22));
-      padding: 12px 12px;
-      font-size: 1.12rem;
-      line-height: 1.28;
-      cursor: pointer;
-      box-shadow: 0 10px 22px rgba(0,0,0,.35), 0 0 12px rgba(255,255,255,.05);
-      user-select: none;
-      transform: translateZ(0);
-      transition: transform .12s ease, border-color .12s ease, background .12s ease, opacity .12s ease;
-    }
-
-    #todayTasks li:active, #taskList li:active{ transform: scale(.992); }
-    #todayTasks li.done, #taskList li.done{ text-decoration: line-through; opacity: .55; }
-
-    .notesRow{
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: nowrap;
-      margin: 0;
-    }
-
-    .notesRow .bigLabel{
-      font-family: 'Luckiest Guy', cursive;
-      letter-spacing: .9px;
-      margin: 0;
-      font-size: 1.55rem;
-      text-shadow: 0 10px 22px rgba(0,0,0,.55);
-      white-space: nowrap;
-    }
-
-    #noteContainer{
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: linear-gradient(180deg, rgba(0,0,0,.30), rgba(0,0,0,.20));
-      padding: 14px;
-      box-shadow: 0 10px 22px rgba(0,0,0,.35), 0 0 12px rgba(255,255,255,.05);
-      margin-top: 12px;
-
-      width: 100%;
-      min-height: 220px;
-      max-height: 55vh;
-      overflow-y: auto;
-
-      outline: none;
-      resize: none;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      line-height: 1.38;
-
-      color: var(--text);
-      font-family: 'Architects Daughter', cursive;
-      font-size: 1.05rem;
-    }
-    #noteContainer::placeholder{ color: var(--muted2); }
-
-    input, button{
-      width: 100%;
-      padding: 12px;
-      background: rgba(0,0,0,.58);
-      color: var(--text);
-      border: 1px solid var(--line2);
-      font-family: 'Architects Daughter', cursive;
-      font-size: 1rem;
-      border-radius: 14px;
-      box-shadow: 0 10px 22px rgba(0,0,0,.35), 0 0 12px rgba(255,255,255,.06);
-      outline: none;
-      transition: transform .12s ease, border-color .12s ease, background .12s ease;
-    }
-    input::placeholder{ color: var(--muted2); }
-
-    button{
-      cursor: pointer;
-      font-family: 'Luckiest Guy', cursive;
-      letter-spacing: .7px;
-      background: linear-gradient(180deg, rgba(0,0,0,.62), rgba(0,0,0,.44));
-    }
-    button:active{ transform: scale(.992); }
-    button:hover{ border-color: rgba(255,255,255,.55); }
-
-    .form{ display: grid; gap: 10px; margin-top: 12px; }
-
-    .upItem{ display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: start; }
-    .upDate{ font-family: 'Luckiest Guy', cursive; letter-spacing: .6px; font-size: .95rem; opacity: .92; text-align: left; white-space: nowrap; }
-    .upText{ margin: 0; word-break: break-word; color: var(--text); }
-
-    #bottomBar{
-      position: fixed;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: calc(10px + env(safe-area-inset-bottom));
-      width: min(560px, calc(100% - 26px));
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      padding: 12px 14px;
-      background: rgba(0,0,0,.70);
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.28);
-      box-shadow: 0 12px 26px rgba(0,0,0,.55), 0 0 14px rgba(255,255,255,.12);
-      z-index: 999999;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    .bottomBtn{
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      padding: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.28);
-      background-color: rgba(0, 0, 0, 0.70);
-      background-size: 46px 46px;
-      background-position: center;
-      background-repeat: no-repeat;
-      box-shadow: 0 10px 18px rgba(0,0,0,.45), 0 0 10px rgba(255,255,255,.08);
-      cursor: pointer;
-      transition: transform .12s ease, border-color .12s ease;
-    }
-    .bottomBtn:active{ transform: scale(.96); }
-    .bottomBtn:hover{ border-color: rgba(255,255,255,.55); }
-
-    #bottomFade{
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: calc(140px + env(safe-area-inset-bottom));
-      pointer-events: none;
-      z-index: 999998;
-      background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,.92) 25%, rgba(0,0,0,.55) 55%, rgba(0,0,0,0) 100%);
-    }
-
-    @media (max-width: 480px){
-      body{ padding: 16px 14px 160px; }
-      .headerCard, .card{ padding: 14px; border-radius: 16px; }
-      .headerCard::before, .card::before{ margin: -14px 0 12px; }
-      .upItem{ grid-template-columns: 82px 1fr; }
-    }
-
-  </style>
+  button{
+    padding: 10px;
+    border-radius: 12px;
+    background: var(--glass);
+    border: 1px solid var(--line2);
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'Luckiest Guy', cursive;
+  }
+</style>
 </head>
 
 <body>
-  <div class="overlay"></div>
+<main class="page">
+<h1 id="currentDate">Apex Optimization System (AOS)</h1>
 
-  <main class="page">
-    <h1 id="currentDate"></h1>
+<!-- 1) Daily Foundation -->
+<section class="card">
+  <h2 class="sectionTitle">Daily Foundation</h2>
 
-    <!-- TODAY -->
-    <section class="headerCard">
-      <div class="subRow">
-        <h2 class="sectionTitle">Today’s Tasks</h2>
-        <span id="taskCounter" class="pill">0/0</span>
-      </div>
-      <ul id="todayTasks"></ul>
-    </section>
+  <div class="subSection">
+    <h3>Morning Routine</h3>
+    <p>Placeholder: list of tasks to start the day.</p>
+  </div>
 
-    <div class="sectionBreak"></div>
+  <div class="subSection">
+    <h3>Hygiene Routine</h3>
+    <p>Placeholder: morning/night hygiene tasks.</p>
+  </div>
 
-    <!-- NOTES -->
-    <section class="card">
-      <div class="notesRow">
-        <p class="bigLabel">NOTES</p>
-        <button id="saveNoteBtn" class="pill" type="button">Save</button>
-      </div>
-      <textarea id="noteContainer" class="editable" placeholder="Type notes here..." spellcheck="true"></textarea>
-    </section>
+  <div class="subSection">
+    <h3>Weekly Rhythm</h3>
+    <p>Placeholder: recurring weekly schedule details.</p>
+  </div>
 
-    <div class="sectionBreak"></div>
+  <div class="subSection">
+    <h3>Nightly Routine</h3>
+    <p>Placeholder: wind-down tasks for sleep.</p>
+  </div>
 
-    <!-- DAILY FOUNDATION -->
-    <section class="card">
-      <div class="subRow">
-        <h2 class="sectionTitle">Daily Foundation</h2>
-      </div>
-      <ul id="dailyFoundationTasks">
-        <li>Morning Routine</li>
-        <li>Hygiene Routine</li>
-        <li>Weekly Rhythm</li>
-        <li>Nightly Routine</li>
-        <li>Cleaning Schedule</li>
-      </ul>
-    </section>
+  <div class="subSection">
+    <h3>Cleaning Schedule</h3>
+    <p>Placeholder: cleaning tasks and timing.</p>
+  </div>
+</section>
 
-    <div class="sectionBreak"></div>
+<!-- 2) Health & Energy -->
+<section class="card">
+  <h2 class="sectionTitle">Health & Energy</h2>
 
-    <!-- HEALTH & ENERGY -->
-    <section class="card">
-      <div class="subRow">
-        <h2 class="sectionTitle">Health & Energy</h2>
-      </div>
-      <ul id="healthTasks">
-        <li>Structured Consumption (Breakfast)</li>
-        <li>Structured Consumption (Lunch)</li>
-        <li>Structured Consumption (Dinner)</li>
-        <li>Structured Consumption (Snacks)</li>
-        <li>Internal Health</li>
-        <li>External Health</li>
-      </ul>
-    </section>
+  <div class="subSection">
+    <h3>Structured Consumption</h3>
+    <p>Breakfast: [placeholder]</p>
+    <p>Lunch: [placeholder]</p>
+    <p>Dinner: [placeholder]</p>
+    <p>Snacks: [placeholder]</p>
+  </div>
 
-    <div class="sectionBreak"></div>
+  <div class="subSection">
+    <h3>Internal Health</h3>
+    <p>Placeholder: physical health, mental clarity, emotional stability</p>
+  </div>
 
-    <!-- RESOURCES -->
-    <section class="card">
-      <div class="subRow">
-        <h2 class="sectionTitle">Resources</h2>
-      </div>
-      <ul id="resourcesList">
-        <li>Websites & Tools</li>
-        <li>Places & Services</li>
-        <li>Medical Information</li>
-        <li>Networking & Contacts</li>
-        <li>Personal Development</li>
-        <li>Finances & Inventory</li>
-        <li>Nox Auction Keywords</li>
-        <li>Legal</li>
-      </ul>
-    </section>
+  <div class="subSection">
+    <h3>External Health</h3>
+    <p>Placeholder: appearance, fitness, energy levels</p>
+  </div>
 
-    <div class="sectionBreak"></div>
+  <div class="subSection">
+    <h3>Burnout Signs</h3>
+    <p>Internal: compulsive shopping, emotional exhaustion, detachment, loss of motivation</p>
+    <p>External: physical exhaustion, insomnia, forgetfulness, isolation, escapism, irritability, procrastination</p>
+  </div>
+</section>
 
-    <!-- FUTURE -->
-    <section class="card">
-      <div class="subRow">
-        <h2 class="sectionTitle">Future</h2>
-      </div>
-      <ul id="futureList">
-        <li>House</li>
-        <li>Future Wedding</li>
-        <li>Kids</li>
-      </ul>
-    </section>
+<!-- 3) Life Insurance -->
+<section class="card">
+  <h2 class="sectionTitle">Life Insurance</h2>
 
-    <div class="sectionBreak"></div>
+  <div class="subSection">
+    <h3>Study Plan</h3>
+    <p>Placeholder: study tasks and modules</p>
+  </div>
 
-    <!-- ME -->
-    <section class="card">
-      <div class="subRow">
-        <h2 class="sectionTitle">Me</h2>
-      </div>
-      <ul id="meList">
-        <li>Self-Reflection</li>
-        <li>Growth</li>
-      </ul>
-    </section>
+  <div class="subSection">
+    <h3>Practice Questions</h3>
+    <p>Placeholder: question sets and answers</p>
+  </div>
 
-    <div class="sectionBreak"></div>
+  <div class="subSection">
+    <h3>Progress Tracking</h3>
+    <p>Placeholder: track mastery and scores</p>
+  </div>
+</section>
 
-    <!-- UPCOMING TASKS -->
-    <section class="card" id="upcomingSection">
-      <div class="upcomingRow">
-        <h2 class="sectionTitle" style="margin:0;">Upcoming Tasks</h2>
-        <p class="upcomingHint">scheduled</p>
-      </div>
-      <ul id="taskList"></ul>
-    </section>
+<!-- 4) Resources -->
+<section class="card">
+  <h2 class="sectionTitle">Resources</h2>
 
-    <hr class="pageBreak" />
+  <div class="subSection">
+    <h3>Websites & Tools</h3>
+    <p>Placeholder</p>
+  </div>
 
-    <section class="card" id="addScheduledSection">
-      <div class="upcomingRow">
-        <h2 class="sectionTitle" style="margin:0;">Add Scheduled Tasks</h2>
-        <p class="upcomingHint">new</p>
-      </div>
+  <div class="subSection">
+    <h3>Places & Services</h3>
+    <p>Placeholder</p>
+  </div>
 
-      <div class="form">
-        <input id="taskInput" placeholder="Task description" />
-        <input id="taskDate" type="date" />
-        <button id="addTask" type="button">Add Task</button>
-      </div>
-    </section>
-  </main>
+  <div class="subSection">
+    <h3>Medical Info</h3>
+    <p>Placeholder</p>
+  </div>
 
-  <div id="bottomFade" aria-hidden="true"></div>
+  <div class="subSection">
+    <h3>Networking & Contacts</h3>
+    <p>Placeholder</p>
+  </div>
 
-  <script src="assets/utilities/app.js" defer></script>
-  <script src="bottomBar.js" defer></script>
+  <div class="subSection">
+    <h3>Personal Development</h3>
+    <p>Placeholder</p>
+  </div>
 
-  <script>
-    window.addEventListener('load', () => {
-      const note = document.getElementById('noteContainer');
-      const saveBtn = document.getElementById('saveNoteBtn');
-      if (!note || !saveBtn) return;
-      const KEY = 'aos-notes-v1';
+  <div class="subSection">
+    <h3>Finances & Inventory</h3>
+    <p>Placeholder</p>
+  </div>
 
-      function autosize() {
-        note.style.height = 'auto';
-        note.style.height = Math.min(note.scrollHeight, window.innerHeight * 0.55) + 'px';
-     
+  <div class="subSection">
+    <h3>Nox Auction Keywords</h3>
+    <p>Placeholder</p>
+  </div>
+
+  <div class="subSection">
+    <h3>Legal</h3>
+    <p>Placeholder</p>
+  </div>
+</section>
+
+<!-- 5) Future -->
+<section class="card">
+  <h2 class="sectionTitle">Future</h2>
+
+  <div class="subSection">
+    <h3>House</h3>
+    <p>Placeholder: plans, timeline, details</p>
+  </div>
+
+  <div class="subSection">
+    <h3>Wedding</h3>
+    <p>Placeholder: planning, budget, dates</p>
+  </div>
+
+  <div class="subSection">
+    <h3>Kids</h3>
+    <p>Placeholder: family planning</p>
+  </div>
+</section>
+
+<!-- 6) Me -->
+<section class="card">
+  <h2 class="sectionTitle">Me</h2>
+
+  <div class="subSection">
+    <h3>Personal Notes</h3>
+    <textarea placeholder="Write reflections here..."></textarea>
+  </div>
+
+  <div class="subSection">
+    <h3>Weekly Self-Review</h3>
+    <p>Placeholder</p>
+  </div>
+</section>
+
+</main>
+</body>
+</html>
