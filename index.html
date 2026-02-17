@@ -171,8 +171,8 @@ button{
 <option value="linear">Linear</option>
 </select>
 
-<label>Background Image URL</label>
-<input type="text" id="editBgImage">
+<label>Upload Background Image</label>
+<input type="file" id="editBgFile" accept="image/*">
 
 <label>Blur</label>
 <input type="range" id="editBlur" min="0" max="20">
@@ -236,11 +236,19 @@ saveEdit.onclick = ()=>{
     currentCard.style.background = editBoxColor.value;
   }
 
-  if(editBgImage.value){
-    currentCard.style.backgroundImage = `url(${editBgImage.value})`;
+const fileInput = document.getElementById('editBgFile');
+
+if(fileInput.files && fileInput.files[0]){
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+    currentCard.style.backgroundImage = `url(${e.target.result})`;
     currentCard.style.backgroundSize = "cover";
     currentCard.style.backgroundPosition = "center";
-  }
+  };
+
+  reader.readAsDataURL(fileInput.files[0]);
+}
 
   currentCard.style.backdropFilter = `blur(${editBlur.value}px)`;
 
