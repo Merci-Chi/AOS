@@ -1,80 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Interactive Glass Cards</title>
+<title>Advanced Editable Dashboard</title>
 
 <style>
-:root {
-  --bg: #000;
-  --text: #fff;
-  --line: rgba(255,255,255,.22);
-  --line2: rgba(255,255,255,.42);
-  --glass: rgba(0,0,0,.55);
-  --radius: 18px;
-  --shadow: 0 10px 30px rgba(0,0,0,.55);
+:root{
+  --radius:18px;
+  --shadow:0 15px 40px rgba(0,0,0,.55);
 }
 
-* { box-sizing: border-box; }
-body {
+*{box-sizing:border-box;}
+
+body{
   margin:0;
-  font-family: system-ui;
+  font-family:system-ui;
   background:#000;
   color:white;
+  min-height:100vh;
+  transition:.3s;
 }
 
-.wrap { max-width:1200px; margin:auto; padding:20px; }
+.wrap{
+  max-width:1200px;
+  margin:auto;
+  padding:40px 20px;
+}
 
-.card {
+.grid{
+  display:grid;
+  gap:48px;
+}
+
+@media(min-width:900px){
+  .grid{grid-template-columns:repeat(2,1fr);}
+}
+
+.card{
+  position:relative;
   background:rgba(255,255,255,.05);
-  border:1px solid var(--line);
   border-radius:var(--radius);
-  padding:20px;
-  backdrop-filter:blur(10px);
+  padding:24px;
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.15);
   box-shadow:var(--shadow);
 }
 
-.grid { display:grid; gap:32px; }
-@media(min-width:900px){
-  .grid { grid-template-columns:repeat(2,1fr); }
-}
-
-.card-item {
+.card-item{
   position:relative;
-  padding:16px;
+  padding:18px;
   border-radius:var(--radius);
-  background:var(--glass);
-  border:1px solid var(--line);
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.15);
   cursor:pointer;
-  transition:.2s;
+  transition:.25s;
+  user-select:none;
 }
-.card-item:hover { transform:translateY(-2px); }
 
-.name { font-weight:800; font-size:14px; }
-.meta { font-size:11px; opacity:.7; }
+.card-item:hover{transform:translateY(-3px);}
 
-.half-wrapper { display:flex; gap:24px; flex-wrap:wrap; }
+.name{font-weight:800;font-size:16px;}
+.meta{font-size:12px;opacity:.7;}
 
-.card-item {
-  margin-bottom: 20px;
+.half-wrapper{
+  display:flex;
+  gap:32px;
+  flex-wrap:wrap;
+  margin-top:32px;
 }
-.card-item.half { flex:1 1 calc(50% - 8px); }
 
-/* Edit Button */
+.card-item.half{
+  flex:1 1 calc(50% - 16px);
+}
+
 .edit-btn{
   position:absolute;
-  top:8px;
-  right:8px;
-  width:22px;
-  height:22px;
+  top:10px;
+  right:10px;
+  width:24px;
+  height:24px;
   border-radius:50%;
   border:1px solid white;
   cursor:pointer;
+  opacity:.7;
+  transition:.2s;
 }
+.edit-btn:hover{opacity:1;}
 
-/* View Modal */
-.modal, .editor-modal{
+.modal,.editor{
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.75);
@@ -83,34 +97,45 @@ body {
   align-items:center;
   opacity:0;
   pointer-events:none;
-  transition:.2s;
+  transition:.25s;
 }
-.modal.active, .editor-modal.active{
+
+.modal.active,.editor.active{
   opacity:1;
   pointer-events:auto;
 }
 
-.modal-content, .editor-content{
+.modal-box,.editor-box{
   background:#111;
-  padding:24px;
+  padding:28px;
   border-radius:16px;
-  width:400px;
+  width:420px;
   max-width:95%;
   display:flex;
   flex-direction:column;
-  gap:12px;
+  gap:14px;
 }
 
-input, select{
-  padding:6px;
+input,select{
+  padding:8px;
   background:#222;
   border:1px solid #444;
   color:white;
   border-radius:6px;
 }
+
 button{
-  padding:8px;
+  padding:10px;
+  border:none;
   cursor:pointer;
+  border-radius:6px;
+}
+
+#addCardBtn{
+  margin-top:32px;
+  background:white;
+  color:black;
+  font-weight:600;
 }
 </style>
 </head>
@@ -118,7 +143,6 @@ button{
 <body>
 
 <div class="wrap">
-
 <div class="grid">
 
 <div class="card">
@@ -130,6 +154,7 @@ button{
 </div>
 
 <div class="half-wrapper">
+
 <div class="card-item half" data-detail="Half A popup">
 <p class="name">Half Card A</p>
 <p class="meta">Snippet</p>
@@ -139,24 +164,28 @@ button{
 <p class="name">Half Card B</p>
 <p class="meta">Snippet</p>
 </div>
+
 </div>
+
 <button id="addCardBtn">+ Add Card</button>
+
 </div>
 
 </div>
 </div>
 
 <!-- View Modal -->
-<div class="modal" id="modal">
-<div class="modal-content">
-<p id="modal-text"></p>
-<button id="closeModal">Close</button>
+<div class="modal" id="viewModal">
+<div class="modal-box">
+<p id="modalText"></p>
+<button onclick="closeView()">Close</button>
 </div>
 </div>
 
-<!-- Editor Modal -->
-<div class="editor-modal" id="editorModal">
-<div class="editor-content">
+<!-- Editor -->
+<div class="editor" id="editor">
+<div class="editor-box">
+
 <label>Text</label>
 <input type="text" id="editText">
 
@@ -164,7 +193,7 @@ button{
 <input type="color" id="editTextColor">
 
 <label>Text Size</label>
-<input type="number" id="editTextSize" min="10" max="60">
+<input type="number" id="editTextSize" min="10" max="72">
 
 <label>Box Color</label>
 <input type="color" id="editBoxColor">
@@ -177,199 +206,145 @@ button{
 
 <label>Upload Background Image</label>
 <input type="file" id="editBgFile" accept="image/*">
-<button type="button" id="removeImage">Remove Background Image</button>
+
+<button id="removeImage">Remove Background Image</button>
 
 <label>Blur</label>
-<input type="range" id="editBlur" min="0" max="20">
+<input type="range" id="editBlur" min="0" max="30">
 
-<button id="saveEdit">Save</button>
+<button id="saveEdit">Save Changes</button>
+
 </div>
 </div>
 
 <script>
 
-const modal = document.getElementById('modal');
-const modalText = document.getElementById('modal-text');
-const closeModal = document.getElementById('closeModal');
-const editorModal = document.getElementById('editorModal');
+let currentElement=null;
+let dragged=null;
 
-let currentElement = null;
+const viewModal=document.getElementById("viewModal");
+const modalText=document.getElementById("modalText");
+const editor=document.getElementById("editor");
 
-/* -----------------------
-   DRAG SYSTEM
------------------------ */
+function closeView(){viewModal.classList.remove("active");}
 
-let draggedItem = null;
-
-document.addEventListener("dragstart", e=>{
-  if(e.target.classList.contains("card-item")){
-    draggedItem = e.target;
-  }
-});
-
-document.addEventListener("dragover", e=>{
-  e.preventDefault();
-});
-
-document.addEventListener("drop", e=>{
-  if(e.target.classList.contains("card-item")){
-    e.target.parentNode.insertBefore(draggedItem, e.target);
-  }
-});
-
-/* Make cards draggable */
 function enableDrag(el){
-  el.setAttribute("draggable", true);
-}
+  el.setAttribute("draggable",true);
 
-/* -----------------------
-   EDIT BUTTON SYSTEM
------------------------ */
+  el.addEventListener("dragstart",()=>dragged=el);
+
+  el.addEventListener("dragover",e=>e.preventDefault());
+
+  el.addEventListener("drop",e=>{
+    e.preventDefault();
+    const target=e.target.closest(".card-item");
+    if(target && dragged!==target){
+      target.parentNode.insertBefore(dragged,target);
+    }
+  });
+}
 
 function addEditButton(el){
 
-  el.style.position = "relative";
+  const btn=document.createElement("div");
+  btn.className="edit-btn";
+  el.appendChild(btn);
 
-  const editBtn = document.createElement("div");
-  editBtn.classList.add("edit-btn");
-  el.appendChild(editBtn);
-
-  editBtn.addEventListener("click", (e)=>{
+  btn.addEventListener("click",(e)=>{
     e.stopPropagation();
-    currentElement = el;
+    currentElement=el;
 
-    const nameEl = el.querySelector(".name");
+    const nameEl=el.querySelector?.(".name");
 
     if(nameEl){
-      document.getElementById('editText').value = nameEl.textContent;
-      document.getElementById('editTextSize').value =
-        parseInt(getComputedStyle(nameEl).fontSize);
-      document.getElementById('editTextColor').value =
-        rgbToHex(getComputedStyle(nameEl).color);
+      editText.value=nameEl.textContent;
+      editTextSize.value=parseInt(getComputedStyle(nameEl).fontSize);
+      editTextColor.value=rgbToHex(getComputedStyle(nameEl).color);
     }
 
-    editorModal.classList.add("active");
+    editor.classList.add("active");
   });
 }
 
-/* Apply to existing cards */
-document.querySelectorAll(".card-item").forEach(card=>{
+document.querySelectorAll(".card-item").forEach(el=>{
+  enableDrag(el);
+  addEditButton(el);
+
+  el.addEventListener("click",()=>{
+    modalText.textContent=el.dataset.detail;
+    viewModal.classList.add("active");
+  });
+});
+
+document.querySelectorAll(".card").forEach(addEditButton);
+addEditButton(document.body);
+
+document.getElementById("addCardBtn").addEventListener("click",()=>{
+  const card=document.createElement("div");
+  card.className="card-item";
+  card.innerHTML=`<p class="name">New Card</p><p class="meta">New Info</p>`;
   enableDrag(card);
   addEditButton(card);
-
-  card.addEventListener("click", ()=>{
-    modalText.textContent = card.dataset.detail;
-    modal.classList.add("active");
-  });
+  document.querySelector(".card").appendChild(card);
 });
 
-/* -----------------------
-   ADD NEW CARD
------------------------ */
-
-document.getElementById("addCardBtn")?.addEventListener("click", ()=>{
-
-  const newCard = document.createElement("div");
-  newCard.className = "card-item";
-  newCard.innerHTML = `
-    <p class="name">New Card</p>
-    <p class="meta">New Info</p>
-  `;
-
-  enableDrag(newCard);
-  addEditButton(newCard);
-
-  newCard.addEventListener("click", ()=>{
-    modalText.textContent = "New card popup.";
-    modal.classList.add("active");
-  });
-
-  document.querySelector(".card").appendChild(newCard);
+document.getElementById("removeImage").addEventListener("click",()=>{
+  if(!currentElement)return;
+  currentElement.style.backgroundImage="";
+  editBgFile.value="";
 });
 
-/* -----------------------
-   REMOVE IMAGE
------------------------ */
+document.getElementById("saveEdit").addEventListener("click",()=>{
 
-document.getElementById("removeImage").addEventListener("click", ()=>{
-  if(currentElement){
-    currentElement.style.backgroundImage = "";
-    document.getElementById("editBgFile").value = "";
-  }
-});
+  if(!currentElement)return;
 
-/* -----------------------
-   SAVE EDITS
------------------------ */
-
-document.getElementById("saveEdit").onclick = ()=>{
-
-  if(!currentElement) return;
-
-  const nameEl = currentElement.querySelector(".name");
+  const nameEl=currentElement.querySelector?.(".name");
 
   if(nameEl){
-    nameEl.textContent = document.getElementById("editText").value;
-    nameEl.style.color = document.getElementById("editTextColor").value;
-    nameEl.style.fontSize =
-      document.getElementById("editTextSize").value + "px";
+    nameEl.textContent=editText.value;
+    nameEl.style.color=editTextColor.value;
+    nameEl.style.fontSize=editTextSize.value+"px";
   }
 
-  const boxColor = document.getElementById("editBoxColor").value;
-  const gradient = document.getElementById("gradientSelect").value;
+  const color=editBoxColor.value;
+  const gradient=gradientSelect.value;
 
   if(gradient==="linear"){
-    currentElement.style.background =
-      `linear-gradient(135deg, ${boxColor}, black)`;
+    currentElement.style.backgroundImage=
+      `linear-gradient(135deg,${color},black)`;
   }else{
-    currentElement.style.background = boxColor;
+    currentElement.style.backgroundColor=color;
   }
 
-  const fileInput = document.getElementById("editBgFile");
-
-  if(fileInput.files && fileInput.files[0]){
-    const reader = new FileReader();
-
-    reader.onload = function(e){
-      currentElement.style.backgroundImage =
+  if(editBgFile.files[0]){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      currentElement.style.backgroundImage=
         `url(${e.target.result})`;
-      currentElement.style.backgroundSize = "cover";
-      currentElement.style.backgroundPosition = "center";
+      currentElement.style.backgroundSize="cover";
+      currentElement.style.backgroundPosition="center";
     };
-
-    reader.readAsDataURL(fileInput.files[0]);
-    fileInput.value = "";
+    reader.readAsDataURL(editBgFile.files[0]);
+    editBgFile.value="";
   }
 
-  editorModal.classList.remove("active");
-};
+  currentElement.style.backdropFilter=
+    `blur(${editBlur.value}px)`;
 
-/* -----------------------
-   CLOSE MODAL
------------------------ */
+  editor.classList.remove("active");
+});
 
-closeModal.onclick = ()=> modal.classList.remove("active");
-modal.onclick = e=>{ if(e.target===modal) modal.classList.remove("active"); };
-
-/* -----------------------
-   COLOR HELPER
------------------------ */
+editor.addEventListener("click",e=>{
+  if(e.target===editor)editor.classList.remove("active");
+});
 
 function rgbToHex(rgb){
-  const result = rgb.match(/\d+/g);
-  return "#" + result.map(x=>{
-    const hex = parseInt(x).toString(16);
-    return hex.length==1 ? "0"+hex : hex;
+  const result=rgb.match(/\d+/g);
+  return "#"+result.map(x=>{
+    const hex=parseInt(x).toString(16);
+    return hex.length==1?"0"+hex:hex;
   }).join('');
 }
-
-/* -----------------------
-   MAKE PANELS EDITABLE
------------------------ */
-
-document.querySelectorAll(".card").forEach(panel=>{
-  addEditButton(panel);
-});
 
 </script>
 </body>
